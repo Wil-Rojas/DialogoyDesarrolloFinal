@@ -3,7 +3,7 @@
 
 // Lee de variables de entorno (Railway) o usa valores por defecto (local)
 $host = getenv('DB_HOST') ?: 'localhost';
-$dbname = getenv('DB_NAME') ?: 'dialogodesarrollo';
+$dbname = getenv('DB_NAME') ?: 'revista_digital';
 $username = getenv('DB_USER') ?: 'root';
 $password = getenv('DB_PASS') ?: '';
 $port     = $_ENV['DB_PORT']     ?? getenv('DB_PORT')     ?: '3306';

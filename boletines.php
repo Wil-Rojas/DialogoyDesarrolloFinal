@@ -11,6 +11,31 @@ function fechaDiaMes($fecha) {
     $f = strtotime($fecha);
     return date('d', $f) . ' de ' . $meses[date('n', $f) - 1] . ' de ' . date('Y', $f);
 }
+
+// Función para encontrar el PDF en las carpetas correctas
+function obtenerRutaPDF($ruta_db) {
+    if (empty($ruta_db)) return '';
+    
+    // 1. Si la ruta original funciona, la usamos
+    if (file_exists($ruta_db)) return $ruta_db;
+    
+    // 2. Probamos si el archivo está en la carpeta boletines/ (raíz)
+    if (file_exists('boletines/' . $ruta_db)) return 'boletines/' . $ruta_db;
+    
+    // 3. Probamos si está en uploads/
+    if (file_exists('uploads/' . $ruta_db)) return 'uploads/' . $ruta_db;
+    
+    // 4. Probamos si está en uploads/boletines/
+    if (file_exists('uploads/boletines/' . $ruta_db)) return 'uploads/boletines/' . $ruta_db;
+    
+    // 5. Si en la BD solo guardaron el nombre del archivo (ej. "20260924_070421...pdf")
+    $nombre_archivo = basename($ruta_db);
+    if (file_exists('boletines/' . $nombre_archivo)) return 'boletines/' . $nombre_archivo;
+    if (file_exists('uploads/boletines/' . $nombre_archivo)) return 'uploads/boletines/' . $nombre_archivo;
+    
+    // Si no se encontró en ningún lado, devolvemos la ruta original para que el enlace no se rompa
+    return $ruta_db;
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -187,13 +212,19 @@ function fechaDiaMes($fecha) {
 <div class="container" style="padding: 40px 15px 80px;">
     <?php if (count($boletines) > 0): ?>
         <div class="boletines-grid">
-            <?php foreach ($boletines as $boletin): ?>
+            <?php foreach ($boletines as $boletin): 
+                // Obtenemos la ruta real del PDF
+                $ruta_pdf_real = obtenerRutaPDF($boletin['archivo_pdf']);
+                $existe_pdf = !empty($ruta_pdf_real) && file_exists($ruta_pdf_real);
+            ?>
                 <div class="boletin-card">
                     <div class="pdf-preview">
-                        <?php if (!empty($boletin['archivo_pdf']) && file_exists($boletin['archivo_pdf'])): ?>
-                            <embed src="<?= htmlspecialchars($boletin['archivo_pdf']) ?>#toolbar=0&navpanes=0&scrollbar=0&view=FitH" type="application/pdf">
+                        <?php if ($existe_pdf): ?>
+                            <!-- Si el PDF existe, mostramos la vista previa -->
+                            <embed src="<?= htmlspecialchars($ruta_pdf_real) ?>#toolbar=0&navpanes=0&scrollbar=0&view=FitH" type="application/pdf">
                             <div class="overlay"><span>Vista previa</span></div>
                         <?php else: ?>
+                            <!-- Si no existe, mostramos el icono -->
                             <div class="sin-pdf">
                                 <svg width="48" height="48" viewBox="0 0 24 24" fill="#ccc" style="margin-bottom:15px;"><path d="M20 2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-8.5 7.5c0 .83-.67 1.5-1.5 1.5H9v2H7.5V7H10c.83 0 1.5.67 1.5 1.5v1zm5 2c0 .83-.67 1.5-1.5 1.5h-2.5V7H15c.83 0 1.5.67 1.5 1.5v3zm4-3H19v1h1.5V11H19v2h-1.5V7h3v1.5zM9 9.5h1v-1H9v1zM4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm10 5.5h1v-3h-1v3z"/></svg>
                                 Vista previa no disponible
@@ -203,7 +234,8 @@ function fechaDiaMes($fecha) {
                     <div class="boletin-info">
                         <div class="boletin-numero">Boletin <?= htmlspecialchars($boletin['numero_boletin']) ?></div>
                         <div class="boletin-fecha"><?= fechaDiaMes($boletin['fecha_publicacion']) ?></div>
-                        <a href="<?= htmlspecialchars($boletin['archivo_pdf']) ?>" target="_blank" class="btn-leer-boletin">
+                        <!-- El botón usa la ruta real encontrada -->
+                        <a href="<?= htmlspecialchars($ruta_pdf_real) ?>" target="_blank" class="btn-leer-boletin">
                             Leer Boletin
                         </a>
                     </div>
